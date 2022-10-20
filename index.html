@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .body {
+            width: 1000px;
+            margin: 0 auto;
+            border: 1px solid #000;
+            /* box-sizing: border-box; */
+        }
+
+        .seat {
+            float: left;
+            width: 80px;
+            height: 40px;
+            border: 1px solid #000;
+            margin: 2px;
+        }
+
+        .row,
+        .line {
+            float: left;
+            width: 80px;
+            height: 40px;
+            text-align: center;
+            line-height: 50px;
+            margin: 2px;
+        }
+
+        .background_red {
+            background: red;
+        }
+
+        .footer {
+            width: 500px;
+            margin: 10px auto;
+        }
+
+        .text {
+            width: 1000px;
+            margin: 10px auto;
+            height: 169px;
+            overflow: scroll;
+        }
+
+        .text::-webkit-scrollbar {
+            display: none
+        }
+
+        .header {
+            width: 200px;
+            margin: 20px auto;
+        }
+    </style>
+    <script>
+        function random(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        }
+    </script>
+</head>
+
+<body>
+    <div class="header">
+        <h1>这一面是讲台</h1>
+    </div>
+    <div class="body">
+    </div>
+    <div class="footer">
+        <button id="random">随机抽选</button>
+        <button id="n_random">N 连抽</button>
+        <button id="addone">补抽</button>
+        <button id="view">查看已抽座次</button>
+        <button id="reset">重置</button>
+
+    </div>
+    <div class="text" id="remember"></div>
+    <script>
+
+        var x;
+        var y;
+        var Random_X;
+        var Random_Y;
+        var body_width;
+        var run_count = 0;
+        var Random_X_Pool = new Array;
+        var Random_Y_Pool = new Array;
+        var n_random_flag = 0;
+        var n_random;
+        var remember_count = 0;
+        var button_random = document.querySelector('#random');
+        var button_reset = document.querySelector('#reset');
+        var button_n_random = document.querySelector('#n_random');
+        var remember = document.querySelector('#remember');
+        var button_addone = document.querySelector('#addone');
+        var button_view = document.querySelector('#view');
+
+
+        //绘制座位表
+        function draw_seat() {
+            x = parseInt(prompt('请输入行数：'));
+            y = parseInt(prompt('请输入列数：'));
+
+            var body = document.querySelector('.body');
+
+            body_width = (y + 1) * (80 + 6);
+            body.style.width = body_width + 'px';
+
+            for (var i = 1; i < x + 1; i++) {
+                if (i === 1) {
+                    for (var k = 0; k < y + 1; k++) {
+                        var create_seat = document.createElement('div');
+                        create_seat.className = 'line';
+                        create_seat.innerHTML = k;
+                        body.appendChild(create_seat);
+                    }
+                }
+
+                for (var j = 1; j < y + 1; j++) {
+                    if (j === 1) {
+                        var create_seat = document.createElement('div');
+                        create_seat.className = 'row';
+                        create_seat.innerHTML = i;
+                        body.appendChild(create_seat);
+                    }
+                    var create_seat = document.createElement('div');
+                    create_seat.className = 'seat';
+                    create_seat.setAttribute('row', i);
+                    create_seat.setAttribute('line', j);
+                    body.appendChild(create_seat);
+
+                }
+            }
+
+            var wall = document.createElement('div');
+            wall.style.clear = 'both';
+            body.appendChild(wall);
+        }
+
+
+        //随机数生成
+        function get_random() {
+
+            var judge_count = 0;
+
+            do {
+                judge_count = 0;
+                Random_X = random(1, x + 1);
+                Random_Y = random(1, y + 1);
+
+                for (var i = 0; i < run_count; i++) {
+                    if (Random_X_Pool[i] == Random_X && Random_Y_Pool[i] == Random_Y) {
+                        judge_count += 1;
+                    }
+                }
+            } while (judge_count !== 0);
+
+            Random_X_Pool.push(Random_X);
+            Random_Y_Pool.push(Random_Y);
+            console.log(run_count);
+            // console.log(Random_X);
+            // console.log(Random_Y);
+            // console.log(Random_X_Pool);
+            // console.log(Random_Y_Pool);
+
+        }
+
+        //座位表着色
+        function set_color() {
+            var Random_Seat = document.querySelectorAll('.seat');
+            var a;
+            Random_Seat.forEach(element => {
+                // console.log(element);
+                if (element.getAttribute('row') == Random_X && element.getAttribute('line') == Random_Y) {
+                    a = element;
+                    element.className = 'seat background_red';
+                }
+            });
+            // console.log(a);
+        }
+
+        //记录抽取的位置并书写在下方
+        function remember_fun(i) {
+            var p = document.createElement('p');
+            var text = document.querySelector('.text');
+            var temp = "";
+            var Temp = "";
+            remember_count += 1;
+
+            text.style.width = body_width + 'px';
+            for (j = 0; j < parseInt(i); j++) {
+                temp += "[" + Random_X_Pool[Random_X_Pool.length - 1 - j] + "," + Random_Y_Pool[Random_X_Pool.length - 1 - j] + "] "
+            }
+            Temp = "第" + remember_count + "次抽选的记录为：" + temp;
+            p.innerHTML += Temp;
+            text.appendChild(p);
+            text.scrollTop = text.scrollHeight;
+        }
+
+        //清除着色
+        function clear_color() {
+            var seat = document.querySelectorAll('.seat');
+            seat.forEach(element => {
+                element.className = 'seat';
+            });
+        }
+
+        //清除底部记录
+        function clear_remeber() {
+            var text = document.querySelector('.text');
+            text.innerHTML = "";
+        }
+
+        //装饰函数
+        //选择前闪烁
+        function flash() {
+            var Flash_Random_X;
+            var Flash_Random_Y;
+            var temp;
+            var Temp;
+            var i = 1;
+            return new Promise(resolve => {
+                function flash_random() {
+                    clear_color();
+                    Flash_Random_X = random(1, x + 1);
+                    Flash_Random_Y = random(1, y + 1);
+
+                    var Random_Seat = document.querySelectorAll('.seat');
+                    var a;
+                    Random_Seat.forEach(element => {
+                        // console.log(element);
+                        if (element.getAttribute('row') == Flash_Random_X && element.getAttribute('line') == Flash_Random_Y) {
+                            a = element;
+                            element.className = 'seat background_red';
+                        }
+                    });
+
+                    console.log(Flash_Random_X);
+                }
+                temp = setInterval(flash_random, 50);
+                function timeout() {
+                    i += 1;
+                    if (i > 3) {
+                        i = 0;
+                        window.clearInterval(temp);
+                        window.clearInterval(Temp);
+                        resolve('flash');
+                    }
+                    console.log("i：" + i);
+                }
+                Temp = setInterval(timeout, 1000);
+
+
+            })
+        }
+
+        //主函数
+        draw_seat();
+
+
+        //随机挑选按钮
+        button_random.addEventListener('click', async function () {
+            button_random.disabled = true;
+            button_addone.disabled = true;
+            button_n_random.disabled = true;
+            if (run_count < x * y) {
+                await flash();
+                clear_color();
+                get_random();
+                set_color();
+                remember_fun(1)
+                run_count += 1;
+                button_random.disabled = false;
+                button_addone.disabled = false;
+                button_n_random.disabled = false;
+            }
+            else {
+                alert('已经全部抽选完毕！');
+                button_random.disabled = true;
+                button_addone.disabled = true;
+                button_n_random.disabled = true;
+            }
+
+            // console.log(run_count);
+        })
+
+        //重置按钮
+        button_reset.addEventListener('click', function () {
+            Random_X_Pool.length = 0;
+            Random_Y_Pool.length = 0;
+            run_count = 0;
+            remember_count = 0;
+            clear_color();
+            clear_remeber();
+            button_random.disabled = false;
+            button_n_random.disabled = false;
+            button_addone.disabled = false;
+            n_random_flag = 0;
+            button_n_random.innerHTML = "N连抽";
+
+        })
+
+        //N 连抽按钮
+        button_n_random.addEventListener('click', async function () {
+            if (n_random_flag == 0) {
+                n_random = prompt("请输入需要进行几连抽：");
+                if (n_random === null || n_random === '') {
+                    n_random = 1;
+                }
+                n_random_flag = 1;
+                button_n_random.innerHTML = n_random + "连抽";
+            }
+
+            var limit = Random_Y_Pool.length;
+            if (n_random <= (x * y) - limit) {
+                button_n_random.disabled = true;
+                button_addone.disabled = true;
+                button_random.disabled = true;
+                clear_color();
+                console.log(n_random);
+                var i = 0;
+                function timeout_n() {
+                    get_random();
+                    set_color();
+                    run_count += 1;
+                    i += 1;
+                    if (i >= n_random) {
+                        button_n_random.disabled = false;
+                        button_addone.disabled = false;
+                        button_random.disabled = false;
+                        window.clearInterval(interval_n);
+                        remember_fun(n_random);
+                    }
+                }
+                var interval_n = setInterval(timeout_n, 100);
+                // for (var i = 0; i < n_random; i++) {
+                //     get_random();
+                //     set_color();
+                //     run_count += 1;
+                // }
+
+            } else {
+                alert("剩余容量不足以进行 " + n_random + " 连抽！");
+                button_n_random.disabled = true;
+                n_random_flag = 0;
+            }
+        })
+        //补抽按钮
+        button_addone.addEventListener('click', async function () {
+            // await flash();
+            if (run_count < x * y) {
+                get_random();
+                set_color();
+                remember_fun(1)
+                run_count += 1;
+            }
+            else {
+                alert('已经全部抽选完毕！');
+                button_random.disabled = true;
+                button_addone.disabled = true;
+                button_n_random.disabled = true;
+            }
+
+            // console.log(run_count);
+        })
+
+        //查看已抽座次按钮
+        button_view.addEventListener('click', async function () {
+            for (var i = 0; i < Random_X_Pool.length; i++) {
+                var Random_Seat = document.querySelectorAll('.seat');
+                var a;
+                Random_Seat.forEach(element => {
+                    // console.log(element);
+                    if (element.getAttribute('row') == Random_X_Pool[i] && element.getAttribute('line') == Random_Y_Pool[i]) {
+                        a = element;
+                        element.className = 'seat background_red';
+                    }
+                });
+            }
+        })
+    </script>
+</body>
+
+</html>
